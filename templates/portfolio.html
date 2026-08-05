@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}Portfolio - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📊 Aktives Portfolio</h1>
+    
+    <!-- ✅ PORTFOLIO STATS CARDS -->
+    <div class="stats-grid" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <div class="stat-label">💰 Total Investiert</div>
+            <div class="stat-value">
+                {{ "%.2f"|format(stats.total_invested) }}€
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-label">📈 Aktueller Wert</div>
+            <div class="stat-value" style="color: {% if stats.total_current_value >= stats.total_invested %}#28a745{% else %}#dc3545{% endif %};">
+                {{ "%.2f"|format(stats.total_current_value) }}€
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-label">💵 Unrealized P&L</div>
+            <div class="stat-value" style="color: {% if stats.unrealizedpnl >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+                {{ "%.2f"|format(stats.unrealizedpnl) }}€
+                <small style="font-size: 0.7em; display: block;">
+                    ({{ "%.2f"|format(stats.unrealizedpnl_percent) }}%)
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" style="text-align: center; padding: 2rem;">
+        <p>⏳ Warte auf Daten...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state" style="display: none;">
+        <p>📭 Keine offenen Positionen im Portfolio</p>
+    </div>
+
+    <!-- Portfolio Table -->
+    <div id="portfolio-table" class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Stückzahl</th>
+                    <th>Kauf bei</th>
+                    <th>Kaufzeit</th>
+                    <th>Aktuell</th>
+                    <th>Score bei Kauf</th>
+                    <th>Score jetzt</th>
+                    <th>Empfehlung</th>
+                    <th>Wert</th>
+                    <th>P&L</th>
+                    <th>Letztes Update</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody id="portfolio-body">
+                <!-- Will be filled by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// EventSource für Live-Updates
+const eventSource = new EventSource('/api/portfolio/stream');
+
+eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    
+    if (data.type === 'init' || data.type === 'update') {
+        updatePortfolio(data);
+    }
+};
+
+function updatePortfolio(data) {
+    const loading = document.getElementById('loading');
+    const emptyState = document.getElementById('empty-state');
+    const tableContainer = document.getElementById('portfolio-table');
+    const tbody = document.getElementById('portfolio-body');
+    
+    // Hide loading
+    loading.style.display = 'none';
+    
+    // Update Stats Cards
+    updateStatsCards(data.stats);
+    
+    if (!data.positions || data.positions.length === 0) {
+        emptyState.style.display = 'block';
+        tableContainer.style.display = 'none';
+        return;
+    }
+    
+    // Show table
+    emptyState.style.display = 'none';
+    tableContainer.style.display = 'block';
+    
+    // Clear tbody
+    tbody.innerHTML = '';
+    
+    // Add rows
+    data.positions.forEach(pos => {
+        const row = createPortfolioRow(pos);
+        tbody.appendChild(row);
+    });
+}
+
+function updateStatsCards(stats) {
+    // Diese Funktion ist optional - Stats werden server-side gerendert
+    // Aber für Live-Updates könntest du sie hier updaten
+}
+
+function createPortfolioRow(pos) {
+    const row = document.createElement('tr');
+    
+    // Score Badge Helper
+    function getScoreBadge(score) {
+        let color = '#dc3545';
+        if (score >= 8) color = '#00c131';
+        else if (score >= 6) color = '#c9b115';
+        return `<span class="badge" style="color:black ;background-color: ${color}; padding:5px;">${score || 'N/A'}</span>`;
+    }
+    
+    // Score Change
+    let scoreChange = '';
+    if (pos.current_score < pos.signalscore) {
+        scoreChange = `<small style="color: #dc3545;">↓ ${pos.signalscore - pos.current_score}</small>`;
+    } else if (pos.current_score > pos.signalscore) {
+        scoreChange = `<small style="color: #28a745;">↑ ${pos.current_score - pos.signalscore}</small>`;
+    } else {
+        scoreChange = `<small style="color: #6c757d;">→ 0</small>`;
+    }
+    
+    // Signal Color
+    let signalColor = '#6c757d';
+    if (pos.current_signal === 'BUY') signalColor = '#28a745';
+    else if (pos.current_signal === 'SELL') signalColor = '#dc3545';
+    
+    // P&L Color
+    const pnlColor = pos.unrealizedpnl >= 0 ? '#28a745' : '#dc3545';
+    
+    // Format datetime
+    function formatDateTime(dateStr) {
+        if (!dateStr) return 'N/A';
+        const d = new Date(dateStr);
+        return d.toLocaleString('de-DE', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+    }
+    
+    row.innerHTML = `
+        <td>
+            <strong>
+                <a href="https://finance.yahoo.com/chart/${pos.ticker}" 
+                   target="_blank" 
+                   style="color: #007bff; text-decoration: none;">
+                    ${pos.ticker}
+                </a>
+            </strong>
+        </td>
+        <td>${pos.quantity}</td>
+        <td>${pos.avgentryprice.toFixed(2)}€</td>
+        <td><small style="color: #666;">${formatDateTime(pos.entrytime)}</small></td>
+        <td>${pos.currentprice ? pos.currentprice.toFixed(2) : 'N/A'}€</td>
+        <td>${getScoreBadge(pos.signalscore)}</td>
+        <td>${getScoreBadge(pos.current_score)} ${scoreChange}</td>
+        <td><strong style="color: ${signalColor};">${pos.current_signal || 'HOLD'}</strong></td>
+        <td>${pos.totalcost.toFixed(2)}€</td>
+        <td style="color: ${pnlColor};">
+            <strong>${pos.unrealizedpnl ? pos.unrealizedpnl.toFixed(2) : '0.00'}€</strong><br>
+            <small>(${pos.unrealizedpnlpercent ? pos.unrealizedpnlpercent.toFixed(2) : '0.00'}%)</small>
+        </td>
+        <td><small style="color: #666;">${formatDateTime(pos.lastupdate)}</small></td>
+        <td>
+            <button class="btn-close" style="padding:10px; background:#57040c; color:white; border-radius:10px;" onclick="closePosition('${pos.ticker}')">
+                Schließen
+            </button>
+        </td>
+    `;
+    
+    return row;
+}
+
+eventSource.onerror = function(error) {
+    console.error('EventSource error:', error);
+    document.getElementById('loading').innerHTML = '<p style="color: #dc3545;">❌ Verbindungsfehler - bitte Seite neu laden</p>';
+};
+</script>
+
+<!-- Confirmation Modal -->
+<div id="close-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgb(49, 46, 46); padding: 2rem; border-radius: 8px; max-width: 400px; width: 90%;">
+        <h3 style="margin-top: 0;">Position schließen</h3>
+        <p id="close-modal-text"></p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button onclick="cancelClose()" style="padding: 0.5rem 1rem; background: #5a6066; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Abbrechen
+            </button>
+            <button id="confirm-close-btn" style="padding: 0.5rem 1rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Position schließen
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCloseTicker = null;
+
+function closePosition(ticker) {
+    currentCloseTicker = ticker;
+    const modal = document.getElementById('close-modal');
+    const text = document.getElementById('close-modal-text');
+    
+    text.innerHTML = `Möchten Sie die Position <strong>${ticker}</strong> wirklich zum aktuellen Marktpreis schließen?`;
+    modal.style.display = 'block';
+    
+    // Event Listener für Bestätigung
+    document.getElementById('confirm-close-btn').onclick = () => executeClose(ticker);
+}
+
+function cancelClose() {
+    document.getElementById('close-modal').style.display = 'none';
+    currentCloseTicker = null;
+}
+
+async function executeClose(ticker) {
+    const modal = document.getElementById('close-modal');
+    const btn = document.getElementById('confirm-close-btn');
+    const originalText = btn.textContent;
+    
+    btn.textContent = '⏳ Schließe...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(`/api/close_position?ticker=${ticker}&reason=MANUAL_CLOSE`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        modal.style.display = 'none';
+        
+        if (result.status === 'success') {
+            alert(`✅ Position geschlossen!\n\n` +
+                  `Ticker: ${result.ticker}\n` +
+                  `Exit Price: ${result.exit_price.toFixed(2)}€\n` +
+                  `P&L: ${result.total_pnl.toFixed(2)}€\n` +
+                  `Orders geschlossen: ${result.closed_orders}`);
+            
+            // Reload um aktualisierte Daten zu zeigen
+            window.location.reload();
+        } else {
+            alert(`❌ Fehler: ${result.message}`);
+        }
+        
+    } catch (error) {
+        modal.style.display = 'none';
+        alert(`❌ Netzwerkfehler: ${error.message}`);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+</script>
+
+
+{% endblock %}

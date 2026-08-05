@@ -1,0 +1,150 @@
+{
+  "active_profile": "my_custom",
+  
+  "profiles": {
+    "my_custom": {
+      "strategy_name": "My Custom",
+      "description": "Personal custom strategy with conservative risk management and higher portfolio value",
+      
+      "backtest_config": {
+        "start_capital": 10000,
+        "commission_per_trade": 0.001,
+        "slippage_pct": 0.0005,
+        "backtest_days": 360
+      },
+      
+      "universe": {
+        "use_dax": true,
+        "use_sp500": true,
+        "blacklist": ["FSR", "SPLK", "SQ", "SUMO", "TTM"]
+      },
+      
+      "filters": {
+        "MIN_PRICE": 5.0,
+        "MAX_PRICE": 1000.0,
+        "MIN_AVG_VOLUME": 100000,
+        "MIN_VOLUME_SPIKE": 1.42,
+        "USE_TREND_FILTER": false
+      },
+      
+      "trading_parameters": {
+        "AUTO_TRADE_SCORE_THRESHOLD": 6,
+        "TAKE_PROFIT_PCT": 0.135,
+        "STOP_LOSS_PCT": 0.05,
+        "MAX_TOTAL_POSITIONS": 12,
+        "MAX_POSITIONS_PCT": 0.1,
+        "MAX_PORTFOLIO_VALUE": 15000,
+        "USE_TRAILING_STOP": false,
+        "TRAILING_STOP_ACTIVATION": 0.017,
+        "TRAILING_STOP_DISTANCE": 0.033
+      },
+      
+      "risk_management": {
+        "MAX_RISK_PER_TRADE": 0.05,
+        "MAX_PORTFOLIO_RISK": 0.12,
+        "MAX_DRAWDOWN_LIMIT": 0.22,
+        "MAX_PORTFOLIO_EXPOSURE": 0.9,
+        "USE_ATR_POSITION_SIZING": true
+      }
+    },
+    
+    "best_optimized": {
+      "strategy_name": "Best Optimized",
+      "description": "Optimized settings from backtesting with trend filter enabled",
+      
+      "backtest_config": {
+        "start_capital": 10000,
+        "commission_per_trade": 0.001,
+        "slippage_pct": 0.0005,
+        "backtest_days": 360
+      },
+      
+      "universe": {
+        "use_dax": true,
+        "use_sp500": true,
+        "blacklist": ["FSR", "SPLK", "SQ", "SUMO", "TTM"]
+      },
+      
+      "filters": {
+        "MIN_PRICE": 5.0,
+        "MAX_PRICE": 1000.0,
+        "MIN_AVG_VOLUME": 100000,
+        "MIN_VOLUME_SPIKE": 1.42,
+        "USE_TREND_FILTER": true
+      },
+      
+      "trading_parameters": {
+        "AUTO_TRADE_SCORE_THRESHOLD": 6,
+        "TAKE_PROFIT_PCT": 0.135,
+        "STOP_LOSS_PCT": 0.05,
+        "MAX_TOTAL_POSITIONS": 12,
+        "MAX_POSITIONS_PCT": 0.1,
+        "MAX_PORTFOLIO_VALUE": 10000,
+        "USE_TRAILING_STOP": false,
+        "TRAILING_STOP_ACTIVATION": 0.03,
+        "TRAILING_STOP_DISTANCE": 0.02
+      },
+      
+      "risk_management": {
+        "MAX_RISK_PER_TRADE": 0.02,
+        "MAX_PORTFOLIO_RISK": 0.12,
+        "MAX_DRAWDOWN_LIMIT": 0.22,
+        "MAX_PORTFOLIO_EXPOSURE": 0.9,
+        "USE_ATR_POSITION_SIZING": true
+      }
+    },
+    
+    "aggressive": {
+      "strategy_name": "Aggressive",
+      "description": "Aggressive trading strategy with higher volume spike requirements",
+      
+      "backtest_config": {
+        "start_capital": 10000,
+        "commission_per_trade": 0.001,
+        "slippage_pct": 0.0005,
+        "backtest_days": 360
+      },
+      
+      "universe": {
+        "use_dax": true,
+        "use_sp500": true,
+        "blacklist": ["FSR", "SPLK", "SQ", "SUMO", "TTM"]
+      },
+      
+      "filters": {
+        "MIN_PRICE": 5.0,
+        "MAX_PRICE": 1000.0,
+        "MIN_AVG_VOLUME": 100000,
+        "MIN_VOLUME_SPIKE": 1.44,
+        "USE_TREND_FILTER": true
+      },
+      
+      "trading_parameters": {
+        "AUTO_TRADE_SCORE_THRESHOLD": 6,
+        "TAKE_PROFIT_PCT": 0.135,
+        "STOP_LOSS_PCT": 0.05,
+        "MAX_TOTAL_POSITIONS": 12,
+        "MAX_POSITIONS_PCT": 0.1,
+        "MAX_PORTFOLIO_VALUE": 10000,
+        "USE_TRAILING_STOP": false,
+        "TRAILING_STOP_ACTIVATION": 0.03,
+        "TRAILING_STOP_DISTANCE": 0.02
+      },
+      
+      "risk_management": {
+        "MAX_RISK_PER_TRADE": 0.02,
+        "MAX_PORTFOLIO_RISK": 0.12,
+        "MAX_DRAWDOWN_LIMIT": 0.22,
+        "MAX_PORTFOLIO_EXPOSURE": 0.9,
+        "USE_ATR_POSITION_SIZING": false
+      }
+    }
+  },
+  
+  "optimization_ranges": {
+    "TAKE_PROFIT_PCT": [0.05, 0.1, 0.15, 0.2],
+    "STOP_LOSS_PCT": [0.03, 0.05, 0.1],
+    "AUTO_TRADE_SCORE_THRESHOLD": [4, 5, 6, 7],
+    "MAX_TOTAL_POSITIONS": [7, 9, 12, 15]
+  }
+}

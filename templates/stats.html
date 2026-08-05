@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Statistics - Trading Bot{% endblock %}
+{% block content %}
+
+<link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+
+<h1>📈 Trading Statistics</h1>
+
+<div class="stats-grid">
+
+    <div class="stat-card stat-card-trades">
+        <h3>Total Trades</h3>
+        <p>{{ stats.get('totaltrades', 0) }}</p>
+    </div>
+
+    <div class="stat-card {{ 'pnl-border-positive' if stats.get('totalpnl', 0) >= 0 else 'pnl-border-negative' }}">
+        <h3>Total P&L</h3>
+        <p class="{{ 'pnl-positive' if stats.get('totalpnl', 0) >= 0 else 'pnl-negative' }}">
+            {{ "%.2f"|format(stats.get('totalpnl', 0)) }}€
+        </p>
+    </div>
+
+    <div class="stat-card stat-card-winrate">
+        <h3>Win Rate</h3>
+        <p>{{ "%.1f"|format(stats.get('winrate', 0)) }}%</p>
+    </div>
+
+    <div class="stat-card stat-card-avgpnl">
+        <h3>Avg P&L %</h3>
+        <p>{{ "%.2f"|format(stats.get('avgpnlpercent', 0)) }}%</p>
+    </div>
+
+    <div class="stat-card stat-card-winning">
+        <h3>Winning Trades</h3>
+        <p>{{ stats.get('winningtrades', 0) }}</p>
+    </div>
+
+    <div class="stat-card stat-card-losing">
+        <h3>Losing Trades</h3>
+        <p>{{ stats.get('totaltrades', 0) - stats.get('winningtrades', 0) }}</p>
+    </div>
+
+    <div class="stat-card stat-card-realized">
+        <h3>Realized P&L</h3>
+        <p class="{{ 'pnl-positive' if stats.get('realizedpnl', 0) >= 0 else 'pnl-negative' }}">
+            {{ "%.2f"|format(stats.get('realizedpnl', 0)) }}€
+        </p>
+    </div>
+
+    <div class="stat-card stat-card-unrealized">
+        <h3>Unrealized P&L</h3>
+        <p class="{{ 'pnl-positive' if stats.get('unrealizedpnl', 0) >= 0 else 'pnl-negative' }}">
+            {{ "%.2f"|format(stats.get('unrealizedpnl', 0)) }}€
+        </p>
+    </div>
+
+</div>
+
+<div class="api-info">
+    <h3>JSON API</h3>
+    <p>Rohdaten als JSON: <a href="/api/stats">/api/stats</a></p>
+</div>
+
+{% endblock %}

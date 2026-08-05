@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Trading Bot{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/">🏠 Dashboard</a>
+            <a href="/portfolio">📊 Portfolio</a>
+            <a href="/trades">📈 Closed Trades</a>
+            <a href="/signals">🎯 Signals</a>
+            <a href="/stats">📉 Statistics</a>
+            <!-- <a href="/api/signals">API: Signals (JSON)</a> -->
+            <!-- <a href="/api/stats">API: Stats (JSON)</a> -->
+            <a href="/Doku/index.html">📚 Dokumentation</a>
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

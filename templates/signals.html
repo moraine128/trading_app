@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+<link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+{% block title %}Active Signals - Trading Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">🔔 Active Trading Signals</h1>
+    
+    <!-- Stats Cards -->
+     <div class="info">
+    <div class="row mb-4" id="statsCards">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">🚀 BUY Signale: <h id="buyCount">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">📊 Strong HOLD (≥5): <h id="holdHighCount">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">📈 Moderate HOLD (3-4): <h id="holdMidCount">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">❌ Ausgeschlossen: <h id="excludedCount">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center" style="padding: 15px;background-color: rgb(33, 2, 61);color: rgb(252, 250, 248);">
+                    <b><a href="/api/trigger_scan">TRIGGER MANUAL SCAN</a></b>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- BUY Signals Table -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <br><h2 class="mb-0">🚀 KAUF-SIGNALE</h2>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" id="buyTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Signal</th>
+                            <th>Score</th>
+                            <th>Preis</th>
+                            <th>RSI</th>
+                            <th>MACD</th>
+                            <th>BB</th>
+                            <th>Vol</th>
+                            <th>Grund</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strong HOLD Table -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">📊 STARKE HOLD-KANDIDATEN (Score ≥ 5)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" id="holdHighTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Signal</th>
+                            <th>Score</th>
+                            <th>Preis</th>
+                            <th>RSI</th>
+                            <th>MACD</th>
+                            <th>BB</th>
+                            <th>Vol</th>
+                            <th>Grund</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moderate HOLD Table -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">📈 MODERATE HOLD-KANDIDATEN (Score 3-4)</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" id="holdMidTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Signal</th>
+                            <th>Score</th>
+                            <th>Preis</th>
+                            <th>RSI</th>
+                            <th>MACD</th>
+                            <th>BB</th>
+                            <th>Vol</th>
+                            <th>Grund</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function formatNumber(val, decimals = 2) {
+    if (val === '-' || val === null || val === undefined) return 'N/A';
+    return typeof val === 'number' ? val.toFixed(decimals) : val;
+}
+
+function getRSIClass(rsi) {
+    if (rsi === '-' || rsi === null) return '';
+    if (rsi < 30) return 'text-success fw-bold';
+    if (rsi > 70) return 'text-danger fw-bold';
+    return '';
+}
+
+function createRow(ticker, data) {
+    const rsi = formatNumber(data.rsi, 1);
+    const price = data.last_price ? `$${formatNumber(data.last_price, 2)}` : 'N/A';
+    const vol = data.volume_ratio ? `${formatNumber(data.volume_ratio, 2)}x` : 'N/A';
+    const rsiClass = getRSIClass(data.rsi);
+    
+    return `
+        <tr>
+            <td><strong>${ticker}</strong></td>
+            <td><span class="badge bg-info">${data.strength || 'N/A'}</span></td>
+            <td><span class="badge bg-primary">${data.score || 0}</span></td>
+            <td>${price}</td>
+            <td class="${rsiClass}">${rsi}</td>
+            <td>${data.macd_signal || 'N/A'}</td>
+            <td>${data.bb_position || 'N/A'}</td>
+            <td>${vol}</td>
+            <td class="text-muted small">${data.reason || data.strength || ''}</td>
+        </tr>
+    `;
+}
+
+function loadSignals() {
+    fetch('/api/signals')
+        .then(response => response.json())
+        .then(signals => {
+            const buySignals = [];
+            const holdHigh = [];
+            const holdMid = [];
+            let excludedCount = 0;
+            
+            // Sort and categorize
+            Object.entries(signals).forEach(([ticker, data]) => {
+                if (data.strength && data.strength.includes('BUY')) {
+                    buySignals.push([ticker, data]);
+                } else if (data.strength === 'HOLD' && data.score >= 5) {
+                    holdHigh.push([ticker, data]);
+                } else if (data.strength === 'HOLD' && data.score >= 3) {
+                    holdMid.push([ticker, data]);
+                } else {
+                    excludedCount++;
+                }
+            });
+            
+            // Sort by score
+            const sortByScore = (a, b) => (b[1].score || 0) - (a[1].score || 0);
+            buySignals.sort(sortByScore);
+            holdHigh.sort(sortByScore);
+            holdMid.sort(sortByScore);
+            
+            // Update stats
+            document.getElementById('buyCount').textContent = buySignals.length;
+            document.getElementById('holdHighCount').textContent = holdHigh.length;
+            document.getElementById('holdMidCount').textContent = holdMid.length;
+            document.getElementById('excludedCount').textContent = excludedCount;
+            
+            // Update tables
+            const buyTable = document.querySelector('#buyTable tbody');
+            const holdHighTable = document.querySelector('#holdHighTable tbody');
+            const holdMidTable = document.querySelector('#holdMidTable tbody');
+            
+            buyTable.innerHTML = buySignals.length > 0 
+                ? buySignals.map(([t, d]) => createRow(t, d)).join('')
+                : '<tr><td colspan="9" class="text-center text-muted">Keine BUY-Signale vorhanden</td></tr>';
+            
+            holdHighTable.innerHTML = holdHigh.length > 0
+                ? holdHigh.map(([t, d]) => createRow(t, d)).join('')
+                : '<tr><td colspan="9" class="text-center text-muted">Keine starken HOLD-Kandidaten vorhanden</td></tr>';
+            
+            holdMidTable.innerHTML = holdMid.length > 0
+                ? holdMid.map(([t, d]) => createRow(t, d)).join('')
+                : '<tr><td colspan="9" class="text-center text-muted">Keine moderaten HOLD-Kandidaten vorhanden</td></tr>';
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden der Signale:', error);
+        });
+}
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', loadSignals);
+
+// Auto-refresh every 60 seconds
+setInterval(loadSignals, 60000);
+</script>
+{% endblock %}python start_trading_bot.py

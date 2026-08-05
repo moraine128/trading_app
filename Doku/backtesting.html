@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backtesting - Trading Bot Dokumentation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <h1>Trading Bot</h1>
+        <p class="version">Version 1.0</p>
+    </div>
+    <nav>
+        <ul class="nav-menu">
+            <li><a href="index.html">🏠 Übersicht</a></li>
+            <li><a href="getting-started.html">🚀 Schnellstart</a></li>
+            <li><a href="architecture.html">🏗️ Architektur</a></li>
+            <li><a href="backtesting.html">📊 Backtesting</a></li>
+            <li><a href="optimization.html">⚡ Optimierung</a></li>
+            <li><a href="configuration.html">⚙️ Konfiguration</a></li>
+            <li><a href="api-reference.html">📡 API-Referenz</a></li>
+            <li><a href="troubleshooting.html">🔧 Fehlerbehebung</a></li>
+            <li><a href="https://github.com/moraine128/trading_app.git" target="_blank">🐙 GitHub</a></li>
+        </ul>
+    </nav>
+</aside>
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="index.html">Dokumentation</a> <span>/</span> Backtesting
+            </div>
+            
+<div class="doc-header">
+    <h1>Backtesting Engine</h1>
+    <p class="subtitle">Teste deine Trading-Strategien mit historischen Daten</p>
+</div>
+
+<section class="section">
+    <h2>Performance-Metriken</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Metrik</th>
+                <th>Beschreibung</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Total Return</strong></td>
+                <td>Gesamtrendite in Prozent</td>
+            </tr>
+            <tr>
+                <td><strong>Sharpe Ratio</strong></td>
+                <td>Risikoadjustierte Rendite</td>
+            </tr>
+            <tr>
+                <td><strong>Max Drawdown</strong></td>
+                <td>Maximaler Verlust vom Höchststand</td>
+            </tr>
+            <tr>
+                <td><strong>Win Rate</strong></td>
+                <td>Anteil gewinnbringender Trades</td>
+            </tr>
+            <tr>
+                <td><strong>Profit Factor</strong></td>
+                <td>Verhältnis Gewinne zu Verlusten</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<section class="section">
+    <h2>Backtest via API</h2>
+    <pre><code>import requests
+
+config = {
+    "start_date": "2024-01-01",
+    "end_date": "2025-12-31",
+    "initial_capital": 10000,
+    "universe": "DAX"
+}
+
+response = requests.post("http://localhost:8000/api/backtest", json=config)
+results = response.json()
+print(f"Return: {results['total_return_pct']:.2f}%")</code></pre>
+</section>
+
+            <footer class="doc-footer">
+                <p>&copy; 2026 Trading Bot Projekt | <a href="https://github.com/moraine128/trading_app.git">GitHub Repository</a></p>
+            </footer>
+        </main>
+    </div>
+    <script src="js/navigation.js"></script>
+</body>
+</html>

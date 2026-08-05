@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API-Referenz - Trading Bot Dokumentation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <h1>Trading Bot</h1>
+        <p class="version">Version 1.0</p>
+    </div>
+    <nav>
+        <ul class="nav-menu">
+            <li><a href="index.html">🏠 Übersicht</a></li>
+            <li><a href="getting-started.html">🚀 Schnellstart</a></li>
+            <li><a href="architecture.html">🏗️ Architektur</a></li>
+            <li><a href="backtesting.html">📊 Backtesting</a></li>
+            <li><a href="optimization.html">⚡ Optimierung</a></li>
+            <li><a href="configuration.html">⚙️ Konfiguration</a></li>
+            <li><a href="api-reference.html">📡 API-Referenz</a></li>
+            <li><a href="troubleshooting.html">🔧 Fehlerbehebung</a></li>
+            <li><a href="https://github.com/moraine128/trading_app.git" target="_blank">🐙 GitHub</a></li>
+        </ul>
+    </nav>
+</aside>
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="index.html">Dokumentation</a> <span>/</span> API-Referenz
+            </div>
+            
+<div class="doc-header">
+    <h1>API-Referenz</h1>
+    <p class="subtitle">REST API Endpunkte und Verwendung</p>
+</div>
+
+<section class="section">
+    <h2>Base URL</h2>
+    <pre><code>http://localhost:8000</code></pre>
+</section>
+
+<section class="section">
+    <h2>Endpunkte</h2>
+
+    <h3>POST /api/backtest</h3>
+    <p>Backtest starten</p>
+    <pre><code>POST /api/backtest
+Content-Type: application/json
+
+{
+    "start_date": "2024-01-01",
+    "end_date": "2025-12-31",
+    "initial_capital": 10000,
+    "universe": "DAX"
+}</code></pre>
+
+    <h3>POST /api/optimization</h3>
+    <p>Optimierung starten</p>
+    <pre><code>POST /api/optimization
+Content-Type: application/json
+
+{
+    "n_trials": 200,
+    "universe": "DAX"
+}</code></pre>
+</section>
+
+<section class="section">
+    <h2>Interaktive Dokumentation</h2>
+    <ul>
+        <li><strong>Swagger UI:</strong> <a href="http://localhost:8000/docs">http://localhost:8000/docs</a></li>
+        <li><strong>ReDoc:</strong> <a href="http://localhost:8000/redoc">http://localhost:8000/redoc</a></li>
+    </ul>
+</section>
+
+            <footer class="doc-footer">
+                <p>&copy; 2026 Trading Bot Projekt | <a href="https://github.com/moraine128/trading_app.git">GitHub Repository</a></p>
+            </footer>
+        </main>
+    </div>
+    <script src="js/navigation.js"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schnellstart - Trading Bot Dokumentation</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <h1>Trading Bot</h1>
+        <p class="version">Version 1.0</p>
+    </div>
+    <nav>
+        <ul class="nav-menu">
+            <li><a href="index.html">🏠 Übersicht</a></li>
+            <li><a href="getting-started.html">🚀 Schnellstart</a></li>
+            <li><a href="architecture.html">🏗️ Architektur</a></li>
+            <li><a href="backtesting.html">📊 Backtesting</a></li>
+            <li><a href="optimization.html">⚡ Optimierung</a></li>
+            <li><a href="configuration.html">⚙️ Konfiguration</a></li>
+            <li><a href="api-reference.html">📡 API-Referenz</a></li>
+            <li><a href="troubleshooting.html">🔧 Fehlerbehebung</a></li>
+            <li><a href="https://github.com/moraine128/trading_app.git" target="_blank">🐙 GitHub</a></li>
+        </ul>
+    </nav>
+</aside>
+        <main class="main-content">
+            <div class="breadcrumb">
+                <a href="index.html">Dokumentation</a> <span>/</span> Schnellstart
+            </div>
+            
+<div class="doc-header">
+    <h1>Schnellstart</h1>
+    <p class="subtitle">In wenigen Schritten zum laufenden Trading-Bot</p>
+</div>
+
+<section class="section">
+    <h2>1. Installation</h2>
+    <h3>Repository klonen</h3>
+    <pre><code>git clone https://github.com/moraine128/trading_app.git
+cd trading_app</code></pre>
+
+    <h3>Virtuelle Umgebung erstellen</h3>
+    <pre><code># Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/macOS
+python3 -m venv venv
+source venv/bin/activate</code></pre>
+
+    <h3>Dependencies installieren</h3>
+    Per requirements.txt installieren: <pre><code>pip install -r requirements.txt</code></pre>
+    Manuell bei Fehlern für Einzelpakete, diese Pakete nachinstallieren: <pre><code>pip install fastapi uvicorn pandas yfinance ta apscheduler jinja2 requests scikit-learn numpy plotly python-multipart optuna</code></pre>
+    
+
+</section>
+
+<section class="section">
+    <h2>2. Konfiguration</h2>
+    <p>Erstelle <code>config.json</code> im Hauptverzeichnis:</p>
+    <pre><code>{
+  "trading": {
+    "universes": ["DAX", "SP500"],
+    "initial_capital": 10000,
+    "max_positions": 10
+  },
+  "risk_management": {
+    "take_profit_pct": 0.05,
+    "stop_loss_pct": 0.03
+  }
+}</code></pre>
+</section>
+
+<section class="section">
+    <h2>3. Server starten</h2>
+    <pre><code>uvicorn main:app --reload --host 0.0.0.0 --port 8000</code></pre>
+    <div class="alert alert-success">
+        <strong>✅ Erfolgreich!</strong> Öffne deinen Browser:
+        <ul>
+            <li>Dashboard: <a href="http://localhost:8000">http://localhost:8000</a></li>
+            <li>API Docs: <a href="http://localhost:8000/docs">http://localhost:8000/docs</a></li>
+            <li>Dokumentation: <a href="http://localhost:8000/Doku">http://localhost:8000/Doku</a></li>
+        </ul>
+    </div>
+</section>
+
+<section class="section">
+    <h2>Häufige Probleme</h2>
+    <div class="alert alert-warning">
+        <strong>Port bereits in Verwendung:</strong>
+        <pre><code>uvicorn main:app --port 8001</code></pre>
+    </div>
+</section>
+
+            <footer class="doc-footer">
+                <p>&copy; 2026 Trading Bot Projekt | <a href="https://github.com/moraine128/trading_app.git">GitHub Repository</a></p>
+            </footer>
+        </main>
+    </div>
+    <script src="js/navigation.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Closed Trades - Trading Bot{% endblock %}
+
+{% block content %}
+<link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+<div class="container-fluid">
+    <h1 class="mb-4">📈 Trades History</h1>
+    
+    <!-- Stats Cards -->
+    <div class="info">
+    <div class="row mb-4" id="statsCards">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">Total Trades: <h id="totalTrades">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">✅ Profitable: <h id="profitableTrades">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">❌ Losing: <h id="losingTrades">-</h></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <p class="mb-0">💰 Total P&L: <h id="totalPnL">-</h></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- Trades Table -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <br><h2 class="mb-0">📊 All Trades</h2>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" id="tradesTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Ticker</th>
+                            <th>Qty</th>
+                            <th>Entry Price</th>
+                            <th>Exit Price</th>
+                            <th>Entry Time</th>
+                            <th>Exit Time</th>
+                            <th>P&L</th>
+                            <th>P&L %</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function formatCurrency(val) {
+    if (val === null || val === undefined) return 'N/A';
+    return '€' + parseFloat(val).toFixed(2);
+}
+
+function formatPercent(val) {
+    if (val === null || val === undefined) return 'N/A';
+    return parseFloat(val).toFixed(2) + '%';
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return date.toLocaleString('de-DE', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function getPnLClass(pnl) {
+    if (pnl > 0) return 'text-success fw-bold';
+    if (pnl < 0) return 'text-danger fw-bold';
+    return 'text-muted';
+}
+
+function createRow(trade, index) {
+    const pnlClass = getPnLClass(trade.pnl);
+    const pnlPercentClass = getPnLClass(trade.pnlpercent);
+    
+    return `
+        <tr>
+            <td>${index + 1}</td>
+            <td><strong>${trade.ticker || 'N/A'}</strong></td>
+            <td>${trade.quantity || 'N/A'}</td>
+            <td>${formatCurrency(trade.entryprice)}</td>
+            <td>${formatCurrency(trade.exitprice)}</td>
+            <td>${formatDate(trade.entrytime)}</td>
+            <td>${formatDate(trade.exittime)}</td>
+            <td class="${pnlClass}">${formatCurrency(trade.pnl)}</td>
+            <td class="${pnlPercentClass}">${formatPercent(trade.pnlpercent)}</td>
+            <td><span class="badge bg-secondary">${trade.exitreason || 'N/A'}</span></td>
+        </tr>
+    `;
+}
+
+function loadTrades() {
+    fetch('/api/trades')
+        .then(response => response.json())
+        .then(trades => {
+            // Calculate stats
+            const totalTrades = trades.length;
+            let profitableTrades = 0;
+            let losingTrades = 0;
+            let totalPnL = 0;
+            
+            trades.forEach(trade => {
+                if (trade.pnl > 0) profitableTrades++;
+                if (trade.pnl < 0) losingTrades++;
+                totalPnL += trade.pnl || 0;
+            });
+            
+            // Update stats
+            document.getElementById('totalTrades').textContent = totalTrades;
+            document.getElementById('profitableTrades').textContent = profitableTrades;
+            document.getElementById('losingTrades').textContent = losingTrades;
+            
+            const pnlElement = document.getElementById('totalPnL');
+            pnlElement.textContent = formatCurrency(totalPnL);
+            pnlElement.parentElement.parentElement.className = totalPnL >= 0 
+                ? 'card bg-success text-white' 
+                : 'card bg-danger text-white';
+            
+            // Update table
+            const tbody = document.querySelector('#tradesTable tbody');
+            
+            if (totalTrades === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Keine Trades vorhanden</td></tr>';
+            } else {
+                // Sort by exit time (newest first)
+                trades.sort((a, b) => new Date(b.exittime) - new Date(a.exittime));
+                tbody.innerHTML = trades.map((trade, i) => createRow(trade, i)).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Fehler beim Laden der Trades:', error);
+            document.querySelector('#tradesTable tbody').innerHTML = 
+                '<tr><td colspan="10" class="text-center text-danger py-4">Fehler beim Laden der Trades</td></tr>';
+        });
+}
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', loadTrades);
+
+// Auto-refresh every 30 seconds
+setInterval(loadTrades, 30000);
+</script>
+{% endblock %}

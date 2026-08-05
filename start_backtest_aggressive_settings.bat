@@ -1,0 +1,1 @@
+python backtest_main.py --mode single --settings aggressive_settings.json

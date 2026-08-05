@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pandas
+yfinance
+ta
+apscheduler
+jinja2
+requests
+scikit-learn
+numpy
+plotly
+
+

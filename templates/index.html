@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Trading Bot{% endblock %}
+
+{% block content %}
+<h1 class="dashboard-h1">📊 Trading Bot Dashboard</h1>
+<link rel="icon" href="/static/css/favicon.ico" type="image/x-icon">
+<!-- Quick Stats with Live Loading -->
+<div id="statsContainer" class="stats-container">
+    <!-- Stats cards will be loaded here -->
+</div>
+
+<!-- Loading Status -->
+<div id="loadingStatus" class="loading-status">
+    <strong id="statusText">Aktualisiere Dashboard...</strong>
+</div>
+
+<!-- Recent Activity -->
+<div class="margin-top-40">
+    <h2 class="margin-bottom-20">Recent Activity</h2>
+    <div id="activityContainer" class="activity-container">
+        <p class="color-gray">Lade aktivitäten...</p>
+    </div>
+</div>
+
+<script>
+// Load stats immediately
+fetch('/api/stats')
+    .then(r => r.json())
+    .then(data => {
+        const container = document.getElementById('statsContainer');
+        
+        // Create stat cards
+        const stats = [
+            { title: 'Open Positions', value: data.open_positions || 0, icon: '📈', color: '#2196F3' },
+            { title: 'Total P&L', value: `€${(data.total_pnl || 0).toFixed(2)}`, icon: '💰', color: data.total_pnl >= 0 ? '#4CAF50' : '#f44336' },
+            { title: 'Active Signals', value: Object.keys(data.signals || {}).length, icon: '🔔', color: '#ff9800' },
+            { title: 'Win Rate', value: `${(data.winrate || 0).toFixed(1)}%`, icon: '🎯', color: '#9c27b0' }
+        ];
+        
+        stats.forEach(stat => {
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            card.style.borderLeftColor = stat.color;
+            
+            card.innerHTML = `
+                <div class="stat-card-header">
+                    <span class="icon">${stat.icon}</span>
+                    <div class="value" style="color: ${stat.color};">${stat.value}</div>
+                </div>
+                <div class="title">${stat.title}</div>
+            `;
+            
+            container.appendChild(card);
+        });
+    })
+    .catch(err => {
+        document.getElementById('statsContainer').innerHTML = '<p class="color-red">Fehler beim Laden der Stats</p>';
+    });
+
+// Load recent trades
+fetch('/api/trades')
+    .then(r => r.json())
+    .then(data => {
+        const container = document.getElementById('activityContainer');
+        const trades = data.slice(0, 5); // Last 5 trades
+        
+        if (trades.length === 0) {
+            container.innerHTML = '<p class="color-gray">Keine aktuellen Aktivitäten</p>';
+            return;
+        }
+        
+        container.innerHTML = trades.map(trade => `
+            <div class="activity-item">
+                <div class="left">
+                    <strong>${trade.ticker}</strong>
+                    <span class="side ${trade.side === 'BUY' ? 'buy' : 'sell'}">${trade.side}</span>
+                    <div class="details">${new Date(trade.entrytime).toLocaleString('de-DE')}</div>
+                </div>
+                <div class="right">
+                    <div class="pnl ${trade.pnl && trade.pnl > 0 ? 'positive' : 'negative'}">${trade.pnl ? '€' + trade.pnl.toFixed(2) : 'Open'}</div>
+                    <div class="details">${trade.quantity} @ €${trade.entryprice.toFixed(2)}</div>
+                </div>
+            </div>
+        `).join('');
+    });
+</script>
+
+{% endblock %}
