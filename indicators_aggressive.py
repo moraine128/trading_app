@@ -78,7 +78,7 @@ def get_signal_details(df):
         
     # ===== NEUE FILTER =====
     # Volume Filter
-    from settings_aggressive import MIN_AVG_VOLUME, VOLUME_SPIKE_THRESHOLD, USE_TREND_FILTER, TREND_SLOPE_MIN
+    from settings_loader import MIN_AVG_VOLUME, VOLUME_SPIKE_THRESHOLD, USE_TREND_FILTER, TREND_SLOPE_MIN
     
     avg_volume = latest.get('Volume_SMA', 0)
     if avg_volume < MIN_AVG_VOLUME:

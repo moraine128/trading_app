@@ -79,7 +79,7 @@
         "STOP_LOSS_PCT": 0.05,
         "MAX_TOTAL_POSITIONS": 12,
         "MAX_POSITIONS_PCT": 0.1,
-        "MAX_PORTFOLIO_VALUE": 10000,
+        "MAX_PORTFOLIO_VALUE": 15000,
         "USE_TRAILING_STOP": false,
         "TRAILING_STOP_ACTIVATION": 0.03,
         "TRAILING_STOP_DISTANCE": 0.02
@@ -99,8 +99,8 @@
       "description": "Aggressive trading strategy with higher volume spike requirements",
       
       "backtest_config": {
-        "start_capital": 10000,
-        "commission_per_trade": 0.001,
+        "start_capital": 15000,
+        "commission_per_trade": 0.01,
         "slippage_pct": 0.0005,
         "backtest_days": 360
       },
@@ -125,7 +125,7 @@
         "STOP_LOSS_PCT": 0.05,
         "MAX_TOTAL_POSITIONS": 12,
         "MAX_POSITIONS_PCT": 0.1,
-        "MAX_PORTFOLIO_VALUE": 10000,
+        "MAX_PORTFOLIO_VALUE": 15000,
         "USE_TRAILING_STOP": false,
         "TRAILING_STOP_ACTIVATION": 0.03,
         "TRAILING_STOP_DISTANCE": 0.02

@@ -34,7 +34,7 @@ def load_settings(profile_name=None):
 _settings = load_settings()
 globals().update(_settings)
 
-# ===== Zusätzliche Variablen aus settings_aggressive.py =====
+# ===== Zusätzliche Kompatibilitäts-Variablen und Defaults =====
 
 # Portfolio Settings (falls nicht in JSON)
 MAX_POSITION_SIZE = _settings.get('MAX_POSITION_SIZE', 100)
@@ -226,9 +226,8 @@ SP500_TOP100 = {
     "AMGN": "Amgen",
     "REGN": "Regeneron",
     "BIIB": "Biogen",
-    "SQ": "Square",
     "ROKU": "Roku",
-    "TTM": "Tencent Music",
+    "63T.F": "Tencent Music Group FRA",
     "PINS": "Pinterest",
     "SNAP": "Snap",
     "DKNG": "DraftKings",
@@ -245,11 +244,8 @@ SP500_TOP100 = {
     "CRWD": "CrowdStrike",
     "ZS": "Zscaler",
     "DDOG": "Datadog",
-    "PSTG": "PostgreSQL",
     "MDB": "MongoDB",
     "ESTC": "Elastic",
-    "SPLK": "Splunk",
-    "SUMO": "Sumo Logic",
     "ENVX": "Enveyo",
     "PLUG": "Plug Power",
     "FCEL": "FuelCell",
@@ -259,7 +255,6 @@ SP500_TOP100 = {
     "XPEV": "XPeng",
     "LI": "Li Auto",
     "NIO": "NIO",
-    "FSR": "Fisker",
     "LCID": "Lucid",
     "RIVN": "Rivian",
     "SOFI": "SoFi",
