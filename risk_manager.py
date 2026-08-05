@@ -58,13 +58,35 @@ class RiskManager:
         """Aktualisiert PnL und Trade-Zähler aus DB."""
         try:
             conn = self._get_connection()
+            # Ensure orders table exists (safe-guard if DB wasn't initialized)
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticker TEXT NOT NULL,
+                    quantity INTEGER NOT NULL,
+                    entryprice REAL NOT NULL,
+                    entrytime TEXT NOT NULL,
+                    side TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    takeprofit REAL,
+                    stoploss REAL,
+                    exitprice REAL,
+                    exittime TEXT,
+                    pnl REAL,
+                    pnlpercent REAL,
+                    signalscore INTEGER,
+                    exitreason TEXT,
+                    highest_price REAL,
+                    trailing_stop_active INTEGER DEFAULT 0
+                )
+            ''')
             cursor = conn.cursor()
             
             # Tages-PnL
             today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             cursor.execute("""
                 SELECT SUM(pnl) as daily_pnl, COUNT(*) as trades_count
-                FROM trades
+                FROM orders
                 WHERE exittime >= ? AND status = 'CLOSED'
             """, (today_start.isoformat(),))
             row = cursor.fetchone()
@@ -75,7 +97,7 @@ class RiskManager:
             week_start = today_start - timedelta(days=today_start.weekday())
             cursor.execute("""
                 SELECT SUM(pnl) as weekly_pnl
-                FROM trades
+                FROM orders
                 WHERE exittime >= ? AND status = 'CLOSED'
             """, (week_start.isoformat(),))
             row = cursor.fetchone()
@@ -201,10 +223,32 @@ class RiskManager:
         """Zählt offene Positionen."""
         try:
             conn = self._get_connection()
+            # Ensure orders table exists
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticker TEXT NOT NULL,
+                    quantity INTEGER NOT NULL,
+                    entryprice REAL NOT NULL,
+                    entrytime TEXT NOT NULL,
+                    side TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    takeprofit REAL,
+                    stoploss REAL,
+                    exitprice REAL,
+                    exittime TEXT,
+                    pnl REAL,
+                    pnlpercent REAL,
+                    signalscore INTEGER,
+                    exitreason TEXT,
+                    highest_price REAL,
+                    trailing_stop_active INTEGER DEFAULT 0
+                )
+            ''')
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT COUNT(*) as cnt
-                FROM trades
+                FROM orders
                 WHERE status = 'OPEN'
             """)
             row = cursor.fetchone()
