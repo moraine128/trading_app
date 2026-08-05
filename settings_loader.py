@@ -34,7 +34,7 @@ def load_settings(profile_name=None):
 _settings = load_settings()
 globals().update(_settings)
 
-# ===== Zusätzliche Variablen aus settings_aggressive.py =====
+# ===== Zusätzliche Kompatibilitäts-Variablen und Defaults =====
 
 # Portfolio Settings (falls nicht in JSON)
 MAX_POSITION_SIZE = _settings.get('MAX_POSITION_SIZE', 100)

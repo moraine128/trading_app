@@ -6,7 +6,7 @@ Dein [trading_app](https://github.com/moraine128/trading_app) Repository ist ein
 - **main_enhanced.py**: Haupt-Applikation mit FastAPI-Server, Scheduler für automatische Scans und Exit-Checks sowie Dashboard-Routen
 - **trading_engine.py**: Trading-Engine für Order-Management, Portfolio-Tracking und Risk-Management
 - **indicators_aggressive.py**: Technische Indikatoren und Signal-Generierung mit verschiedenen Strategien
-- **settings_aggressive.py**: Zentrale Konfiguration für Trading-Parameter, Risk-Limits und Universe-Definitionen
+- **settings.json**: Zentrale JSON-Konfiguration für Trading-Parameter, Risk-Limits und Universe-Definitionen
 
 ### Backtesting & Optimierung
 - **backtest_main.py**: Komplettes Backtesting-Framework mit Trade-Simulation
@@ -64,5 +64,4 @@ Das System implementiert mehrschichtige Risk-Limits:
 - **SQLite**: Datenbank für Trade-History (`trading_data.db`)
 
 Das Repository ist modular aufgebaut und ermöglicht flexible Strategieanpassungen 
-über JSON-Konfigurationsdateien wie `agressive_settings.json`, `best_settings.json` 
-und `my_settings.json`.
+über die zentrale JSON-Konfigurationsdatei `settings.json`.
