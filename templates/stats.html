@@ -6,6 +6,8 @@
 
 <h1>📈 Trading Statistics</h1>
 
+<!-- Gauges removed per user request -->
+
 <div class="stats-grid">
 
     <div class="stat-card stat-card-trades">
@@ -60,5 +62,14 @@
     <h3>JSON API</h3>
     <p>Rohdaten als JSON: <a href="/api/stats">/api/stats</a></p>
 </div>
+
+<script>
+function renderStatsGauges() {
+    // Gauges removed by user request — stats view now shows numeric cards only.
+    return;
+}
+
+document.addEventListener('DOMContentLoaded', renderStatsGauges);
+</script>
 
 {% endblock %}

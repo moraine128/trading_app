@@ -88,7 +88,7 @@ function updatePortfolio(data) {
     
     // Hide loading
     loading.style.display = 'none';
-    
+
     // Update Stats Cards
     updateStatsCards(data.stats);
     
@@ -104,10 +104,14 @@ function updatePortfolio(data) {
     
     // Clear tbody
     tbody.innerHTML = '';
-    
+    const maxAbsPnlPercent = data.positions.reduce((max, pos) => {
+        const value = Math.abs(Number(pos.unrealizedpnlpercent) || 0);
+        return Math.max(max, value);
+    }, 0);
+
     // Add rows
     data.positions.forEach(pos => {
-        const row = createPortfolioRow(pos);
+        const row = createPortfolioRow(pos, maxAbsPnlPercent);
         tbody.appendChild(row);
     });
 }
@@ -117,8 +121,85 @@ function updateStatsCards(stats) {
     // Aber für Live-Updates könntest du sie hier updaten
 }
 
-function createPortfolioRow(pos) {
+function drawMiniGauge(canvas, ratio, arcColor, reverse = false) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height * 0.95;
+    const radius = Math.min(width, height * 1.6) / 2 - 12;
+    const startAngle = -Math.PI / 2;
+    const maxSweep = Math.PI / 2;
+    const clampedRatio = Math.min(Math.max(ratio, 0), 1);
+    const angle = reverse
+        ? startAngle - clampedRatio * maxSweep
+        : startAngle + clampedRatio * maxSweep;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.lineCap = 'round';
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -Math.PI, 0, true);
+    ctx.stroke();
+
+    const arcGradient = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
+    if (arcColor === '#28a745') {
+        arcGradient.addColorStop(0, '#7efb7f');
+        arcGradient.addColorStop(1, '#1f8e3a');
+    } else if (arcColor === '#dc3545') {
+        arcGradient.addColorStop(0, '#ff7a7f');
+        arcGradient.addColorStop(1, '#bd1f28');
+    } else if (arcColor === '#d73df8') {
+        arcGradient.addColorStop(0, '#ff72d1');
+        arcGradient.addColorStop(0.5, '#a84fff');
+        arcGradient.addColorStop(1, '#d73df8');
+    } else if (arcColor === '#4c7dff') {
+        arcGradient.addColorStop(0, '#68b1ff');
+        arcGradient.addColorStop(1, '#4c7dff');
+    } else {
+        arcGradient.addColorStop(0, '#4c7dff');
+        arcGradient.addColorStop(0.35, '#944eff');
+        arcGradient.addColorStop(0.7, '#d73df8');
+        arcGradient.addColorStop(1, '#ff54b3');
+    }
+
+    // full upper half gray backplane
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -Math.PI, 0, false);
+    ctx.stroke();
+
+    // active colored arc
+    ctx.strokeStyle = arcGradient;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, angle, reverse);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-6, 0);
+    ctx.lineTo(radius - 10, 0);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.fillStyle = '#ffffff';
+    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function createPortfolioRow(pos, maxAbsPnlPercent) {
     const row = document.createElement('tr');
+    const rowId = `row-${pos.ticker.replace(/[^a-zA-Z0-9]/g, '')}-${Math.floor(Math.random() * 1000000)}`;
     
     // Score Badge Helper
     function getScoreBadge(score) {
@@ -152,7 +233,10 @@ function createPortfolioRow(pos) {
         const d = new Date(dateStr);
         return d.toLocaleString('de-DE', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
     }
-    
+
+    const totalCost = Number(pos.totalcost || 0);
+    const pnlRatio = Math.min(Math.abs(Number(pos.unrealizedpnlpercent) || 0) / 100, 1);
+
     row.innerHTML = `
         <td>
             <strong>
@@ -167,13 +251,21 @@ function createPortfolioRow(pos) {
         <td>${pos.avgentryprice.toFixed(2)}€</td>
         <td><small style="color: #666;">${formatDateTime(pos.entrytime)}</small></td>
         <td>${pos.currentprice ? pos.currentprice.toFixed(2) : 'N/A'}€</td>
-        <td>${getScoreBadge(pos.signalscore)}</td>
-        <td>${getScoreBadge(pos.current_score)} ${scoreChange}</td>
+        <td class="mini-gauge-cell mini-gauge-cell-score">
+            <canvas id="score-buy-${rowId}" class="mini-gauge-canvas mini-gauge-canvas-score" width="104" height="65"></canvas>
+            <div class="mini-gauge-text">${getScoreBadge(pos.signalscore)}</div>
+        </td>
+        <td class="mini-gauge-cell mini-gauge-cell-score">
+            <canvas id="score-now-${rowId}" class="mini-gauge-canvas mini-gauge-canvas-score" width="104" height="65"></canvas>
+            <div class="mini-gauge-text">${getScoreBadge(pos.current_score)} ${scoreChange}</div>
+        </td>
         <td><strong style="color: ${signalColor};">${pos.current_signal || 'HOLD'}</strong></td>
-        <td>${pos.totalcost.toFixed(2)}€</td>
-        <td style="color: ${pnlColor};">
-            <strong>${pos.unrealizedpnl ? pos.unrealizedpnl.toFixed(2) : '0.00'}€</strong><br>
-            <small>(${pos.unrealizedpnlpercent ? pos.unrealizedpnlpercent.toFixed(2) : '0.00'}%)</small>
+        <td>
+            <div style="font-weight: 700;">${pos.totalcost.toFixed(2)}€</div>
+        </td>
+        <td class="mini-gauge-cell" style="color: ${pnlColor};">
+            <canvas id="pnl-${rowId}" class="mini-gauge-canvas" width="80" height="50"></canvas>
+            <div class="mini-gauge-text"><strong>${pos.unrealizedpnl ? pos.unrealizedpnl.toFixed(2) : '0.00'}€</strong> (${pos.unrealizedpnlpercent ? pos.unrealizedpnlpercent.toFixed(2) : '0.00'}%)</div>
         </td>
         <td><small style="color: #666;">${formatDateTime(pos.lastupdate)}</small></td>
         <td>
@@ -182,8 +274,22 @@ function createPortfolioRow(pos) {
             </button>
         </td>
     `;
-    
+
+    renderRowGauges(row, pos, rowId, maxAbsPnlPercent);
     return row;
+}
+
+function renderRowGauges(row, pos, rowId, maxAbsPnlPercent) {
+    const totalCost = Number(pos.totalcost || 0);
+    const currentValue = Number(pos.currentvalue || 0);
+    const pnlRatio = Math.min(Math.abs(Number(pos.unrealizedpnlpercent) || 0) / 100, 1);
+    const pnlColor = pos.unrealizedpnl >= 0 ? '#28a745' : '#dc3545';
+
+    drawMiniGauge(row.querySelector(`#score-buy-${rowId}`), Math.min((Number(pos.signalscore) || 0) / 10, 1), '#d73df8');
+    drawMiniGauge(row.querySelector(`#score-now-${rowId}`), Math.min((Number(pos.current_score) || 0) / 10, 1), '#d73df8');
+    const pnlPercent = Number(pos.unrealizedpnlpercent) || 0;
+    const scaledPnlRatio = maxAbsPnlPercent > 0 ? Math.min(Math.abs(pnlPercent) / maxAbsPnlPercent, 1) : 0;
+    drawMiniGauge(row.querySelector(`#pnl-${rowId}`), scaledPnlRatio, pnlColor, pnlPercent < 0);
 }
 
 eventSource.onerror = function(error) {
