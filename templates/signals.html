@@ -45,7 +45,8 @@
             </div>
         </div>
     </div>
-    </div>
+
+
     <!-- BUY Signals Table -->
     <div class="card mb-4">
         <div class="card-header bg-success text-white">
@@ -141,11 +142,60 @@ function getRSIClass(rsi) {
     return '';
 }
 
+function drawMiniGauge(canvas, ratio, arcColor, reverse = false) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height * 0.95;
+    const radius = Math.min(width, height * 1.6) / 2 - 8;
+    const startAngle = -Math.PI / 2;
+    const maxSweep = Math.PI / 2;
+    const clamped = Math.min(Math.max(ratio, 0), 1);
+    const angle = reverse ? startAngle - clamped * maxSweep : startAngle + clamped * maxSweep;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.lineCap = 'round';
+
+    // full upper half gray backplane
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -Math.PI, 0, false);
+    ctx.stroke();
+
+    // colored arc
+    const g = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
+    g.addColorStop(0, arcColor);
+    g.addColorStop(1, arcColor);
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, angle, reverse);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-4, 0);
+    ctx.lineTo(radius - 6, 0);
+    ctx.stroke();
+    ctx.restore();
+}
+
 function createRow(ticker, data) {
     const rsi = formatNumber(data.rsi, 1);
     const price = data.last_price ? `$${formatNumber(data.last_price, 2)}` : 'N/A';
     const vol = data.volume_ratio ? `${formatNumber(data.volume_ratio, 2)}x` : 'N/A';
     const rsiClass = getRSIClass(data.rsi);
+    const idSafe = ticker.replace(/[^a-zA-Z0-9]/g, '');
+    const macdVal = Number(data.macd) || Number(data.macd_signal) || 0;
+    const bbVal = Number(data.bb_position) || 0;
+    const volVal = Number(data.volume_ratio) || 0;
     
     return `
         <tr>
@@ -153,10 +203,22 @@ function createRow(ticker, data) {
             <td><span class="badge bg-info">${data.strength || 'N/A'}</span></td>
             <td><span class="badge bg-primary">${data.score || 0}</span></td>
             <td>${price}</td>
-            <td class="${rsiClass}">${rsi}</td>
-            <td>${data.macd_signal || 'N/A'}</td>
-            <td>${data.bb_position || 'N/A'}</td>
-            <td>${vol}</td>
+            <td class="${rsiClass}">
+                <canvas id="rsi-${idSafe}" class="mini-gauge-canvas" width="80" height="50"></canvas>
+                <div class="mini-gauge-text">${rsi}</div>
+            </td>
+            <td>
+                <canvas id="macd-${idSafe}" class="mini-gauge-canvas" width="80" height="50"></canvas>
+                <div class="mini-gauge-text">${data.macd_signal || 'N/A'}</div>
+            </td>
+            <td>
+                <canvas id="bb-${idSafe}" class="mini-gauge-canvas" width="80" height="50"></canvas>
+                <div class="mini-gauge-text">${data.bb_position || 'N/A'}</div>
+            </td>
+            <td>
+                <canvas id="vol-${idSafe}" class="mini-gauge-canvas" width="80" height="50"></canvas>
+                <div class="mini-gauge-text">${vol}</div>
+            </td>
             <td class="text-muted small">${data.reason || data.strength || ''}</td>
         </tr>
     `;
@@ -212,10 +274,186 @@ function loadSignals() {
             holdMidTable.innerHTML = holdMid.length > 0
                 ? holdMid.map(([t, d]) => createRow(t, d)).join('')
                 : '<tr><td colspan="9" class="text-center text-muted">Keine moderaten HOLD-Kandidaten vorhanden</td></tr>';
+
+            renderSignalGauges(buySignals.length, holdHigh.length, holdMid.length, excludedCount, signals);
+            // draw mini gauges for each row (RSI, MACD, BB, Vol)
+            (function drawRowGauges() {
+                const entries = Object.entries(signals);
+                const maxMacd = entries.reduce((m, [k, d]) => Math.max(m, Math.abs(Number(d.macd) || Number(d.macd_signal) || 0)), 0);
+                const maxVol = entries.reduce((m, [k, d]) => Math.max(m, Number(d.volume_ratio) || 0), 0);
+
+                entries.forEach(([ticker, d]) => {
+                    const idSafe = ticker.replace(/[^a-zA-Z0-9]/g, '');
+                    const rsiCanvas = document.getElementById(`rsi-${idSafe}`);
+                    if (rsiCanvas) drawMiniGauge(rsiCanvas, Math.min((Number(d.rsi) || 0) / 100, 1), '#4c7dff', false);
+
+                    const macdCanvas = document.getElementById(`macd-${idSafe}`);
+                    if (macdCanvas) {
+                        const macdVal = Number(d.macd) || Number(d.macd_signal) || 0;
+                        const scaled = maxMacd > 0 ? Math.min(Math.abs(macdVal) / maxMacd, 1) : 0;
+                        drawMiniGauge(macdCanvas, scaled, '#f59e0b', macdVal < 0);
+                    }
+
+                    const bbCanvas = document.getElementById(`bb-${idSafe}`);
+                    if (bbCanvas) drawMiniGauge(bbCanvas, Math.min((Number(d.bb_position) || 0) / 100, 1), '#4c7dff', false);
+
+                    const volCanvas = document.getElementById(`vol-${idSafe}`);
+                    if (volCanvas) {
+                        const volVal = Number(d.volume_ratio) || 0;
+                        const scaled = maxVol > 0 ? Math.min(volVal / maxVol, 1) : 0;
+                        drawMiniGauge(volCanvas, scaled, '#4c7dff', false);
+                    }
+                });
+            })();
         })
         .catch(error => {
             console.error('Fehler beim Laden der Signale:', error);
         });
+}
+
+function renderSignalGauges(buyCount, holdHighCount, holdMidCount, excludedCount, signals) {
+    const total = buyCount + holdHighCount + holdMidCount + excludedCount || 1;
+    const buyRatio = buyCount / total;
+    const excludedRatio = excludedCount / total;
+    const allScores = Object.values(signals).map(s => Number(s.score) || 0);
+    const avgScore = allScores.length ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : 0;
+
+    drawGauge(
+        document.getElementById('signals-buyratio-canvas'),
+        buyRatio,
+        '#4c7dff',
+        `${Math.round(buyRatio * 100)}%`,
+        `${buyCount} BUY`
+    );
+
+    drawGauge(
+        document.getElementById('signals-score-canvas'),
+        Math.min(avgScore / 10, 1),
+        '#d73df8',
+        `${avgScore.toFixed(1)} / 10`,
+        'Durchschnittlich'
+    );
+
+    drawGauge(
+        document.getElementById('signals-excluded-canvas'),
+        excludedRatio,
+        '#f59e0b',
+        `${Math.round(excludedRatio * 100)}%`,
+        `${excludedCount} Ausgeschlossen`
+    );
+}
+
+function drawGauge(canvas, ratio, arcColor, label, subtitle) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height * 0.92;
+    const radius = Math.min(width, height * 1.6) / 2 - 26;
+    const startAngle = Math.PI;
+    const angle = startAngle + Math.min(Math.max(ratio, 0), 1) * Math.PI;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.lineCap = 'round';
+
+    ctx.save();
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = 'rgba(137, 76, 255, 0.35)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 24;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, 0, false);
+    ctx.stroke();
+    ctx.restore();
+
+    // full upper half gray backplane
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, 0, false);
+    ctx.stroke();
+
+    const tickCount = 12;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= tickCount; i++) {
+        const tickAngle = startAngle + (i / tickCount) * Math.PI;
+        const x1 = centerX + Math.cos(tickAngle) * (radius + 4);
+        const y1 = centerY + Math.sin(tickAngle) * (radius + 4);
+        const x2 = centerX + Math.cos(tickAngle) * (radius - 8);
+        const y2 = centerY + Math.sin(tickAngle) * (radius - 8);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    const arcGradient = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
+    if (arcColor === '#28a745') {
+        arcGradient.addColorStop(0, '#7efb7f');
+        arcGradient.addColorStop(1, '#1f8e3a');
+    } else if (arcColor === '#dc3545') {
+        arcGradient.addColorStop(0, '#ff7a7f');
+        arcGradient.addColorStop(1, '#bd1f28');
+    } else if (arcColor === '#d73df8') {
+        arcGradient.addColorStop(0, '#ff72d1');
+        arcGradient.addColorStop(0.5, '#a84fff');
+        arcGradient.addColorStop(1, '#d73df8');
+    } else if (arcColor === '#4c7dff') {
+        arcGradient.addColorStop(0, '#68b1ff');
+        arcGradient.addColorStop(1, '#4c7dff');
+    } else {
+        arcGradient.addColorStop(0, '#4c7dff');
+        arcGradient.addColorStop(0.35, '#944eff');
+        arcGradient.addColorStop(0.7, '#d73df8');
+        arcGradient.addColorStop(1, '#ff54b3');
+    }
+    ctx.strokeStyle = arcGradient;
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, angle, false);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(164, 118, 255, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius + 13, startAngle, 0, false);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.strokeStyle = '#f8f9ff';
+    ctx.lineWidth = 4;
+    ctx.moveTo(-8, 0);
+    ctx.lineTo(radius - 14, 0);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.fillStyle = '#ffffff';
+    ctx.arc(centerX, centerY, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.fillStyle = '#2b074c';
+    ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#f4f4ff';
+    ctx.textAlign = 'center';
+    ctx.font = '700 20px "Segoe UI", Tahoma, sans-serif';
+    ctx.shadowColor = 'rgba(180, 148, 255, 0.7)';
+    ctx.shadowBlur = 14;
+    ctx.fillText(label, centerX, centerY - radius * 0.48);
+
+    ctx.font = '600 12px "Segoe UI", Tahoma, sans-serif';
+    ctx.fillStyle = '#c5c3ff';
+    ctx.shadowColor = 'rgba(180, 148, 255, 0.4)';
+    ctx.shadowBlur = 10;
+    ctx.fillText(subtitle, centerX, centerY + radius * 0.55);
+    ctx.shadowBlur = 0;
 }
 
 // Load on page load

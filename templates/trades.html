@@ -98,6 +98,52 @@ function getPnLClass(pnl) {
     return 'text-muted';
 }
 
+function drawMiniGauge(canvas, ratio, arcColor, reverse = false) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height * 0.95;
+    const radius = Math.min(width, height * 1.6) / 2 - 8;
+    const startAngle = -Math.PI / 2;
+    const maxSweep = Math.PI / 2;
+    const clamped = Math.min(Math.max(ratio, 0), 1);
+    const angle = reverse ? startAngle - clamped * maxSweep : startAngle + clamped * maxSweep;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.lineCap = 'round';
+
+    // full upper half gray backplane
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, -Math.PI, 0, false);
+    ctx.stroke();
+
+    // colored arc
+    const g = ctx.createLinearGradient(centerX - radius, centerY, centerX + radius, centerY);
+    g.addColorStop(0, arcColor);
+    g.addColorStop(1, arcColor);
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, startAngle, angle, reverse);
+    ctx.stroke();
+
+    // needle
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(angle);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-4, 0);
+    ctx.lineTo(radius - 6, 0);
+    ctx.stroke();
+    ctx.restore();
+}
+
 function createRow(trade, index) {
     const pnlClass = getPnLClass(trade.pnl);
     const pnlPercentClass = getPnLClass(trade.pnlpercent);
@@ -112,7 +158,10 @@ function createRow(trade, index) {
             <td>${formatDate(trade.entrytime)}</td>
             <td>${formatDate(trade.exittime)}</td>
             <td class="${pnlClass}">${formatCurrency(trade.pnl)}</td>
-            <td class="${pnlPercentClass}">${formatPercent(trade.pnlpercent)}</td>
+            <td class="${pnlPercentClass}">
+                <canvas id="trade-pnlpercent-${index}" class="mini-gauge-canvas" width="90" height="56"></canvas>
+                <div class="mini-gauge-text">${formatPercent(trade.pnlpercent)}</div>
+            </td>
             <td><span class="badge bg-secondary">${trade.exitreason || 'N/A'}</span></td>
         </tr>
     `;
@@ -153,7 +202,20 @@ function loadTrades() {
             } else {
                 // Sort by exit time (newest first)
                 trades.sort((a, b) => new Date(b.exittime) - new Date(a.exittime));
+
+                // compute max absolute PnL percent for scaling gauges
+                const maxAbsPnlPercent = trades.reduce((m, t) => Math.max(m, Math.abs(Number(t.pnlpercent) || 0)), 0);
+
                 tbody.innerHTML = trades.map((trade, i) => createRow(trade, i)).join('');
+
+                // draw mini gauges for P&L %
+                trades.forEach((trade, i) => {
+                    const canvas = document.getElementById(`trade-pnlpercent-${i}`);
+                    if (!canvas) return;
+                    const val = Number(trade.pnlpercent) || 0;
+                    const scaled = maxAbsPnlPercent > 0 ? Math.min(Math.abs(val) / maxAbsPnlPercent, 1) : 0;
+                    drawMiniGauge(canvas, scaled, val >= 0 ? '#28a745' : '#dc3545', val < 0);
+                });
             }
         })
         .catch(error => {
