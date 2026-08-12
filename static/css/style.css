@@ -293,8 +293,8 @@ tbody tr:last-child td {
 }
 
 .mini-gauge-canvas {
-    width: 80px;
-    height: 50px;
+    width: 104px;
+    height: 65px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.03);
     box-shadow: 0 0 14px rgba(111, 66, 255, 0.18);
