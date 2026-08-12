@@ -2,6 +2,87 @@
 {% block title %}Portfolio - Trading Bot{% endblock %}
 
 {% block content %}
+<style>
+    #portfolio-table {
+        overflow-x: auto;
+    }
+
+    #portfolio-table .data-table {
+        table-layout: fixed;
+        width: 100%;
+        border-spacing: 0;
+        border-collapse: collapse;
+    }
+
+    #portfolio-table .data-table colgroup col:nth-child(6),
+    #portfolio-table .data-table colgroup col:nth-child(7) {
+        width: 120px;
+    }
+
+    #portfolio-table .data-table th,
+    #portfolio-table .data-table td {
+        vertical-align: middle;
+        padding: 10px 6px;
+        text-align: center;
+    }
+
+    #portfolio-table .data-table th {
+        white-space: normal;
+        line-height: 1.2;
+        font-size: 11px;
+        letter-spacing: 0.04em;
+    }
+
+    #portfolio-table .mini-gauge-cell,
+    #portfolio-table .mini-gauge-cell-score {
+        display: table-cell !important;
+        width: 120px;
+        min-width: 120px;
+        max-width: 120px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    #portfolio-table .mini-gauge-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 100%;
+    }
+
+    #portfolio-table .mini-gauge-canvas,
+    #portfolio-table .mini-gauge-canvas-score {
+        display: block;
+        margin: 0 auto;
+        filter: drop-shadow(0 0 8px rgba(173, 94, 255, 0.25));
+    }
+
+    #portfolio-table .mini-gauge-text {
+        display: block;
+        margin-top: 0;
+        text-align: center;
+        line-height: 1.2;
+        font-size: 11px;
+        opacity: 0.95;
+    }
+
+    #portfolio-table .mini-gauge-text .badge {
+        border-radius: 6px;
+        padding: 4px 6px !important;
+        font-size: 11px;
+        font-weight: 700;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 10px rgba(255,255,255,0.08);
+    }
+
+    #portfolio-table .mini-gauge-text small {
+        font-size: 10px;
+        opacity: 0.9;
+    }
+</style>
 <div class="container">
     <h1>📊 Aktives Portfolio</h1>
     
@@ -45,6 +126,20 @@
     <!-- Portfolio Table -->
     <div id="portfolio-table" class="table-container">
         <table class="data-table">
+            <colgroup>
+                <col style="width: 8%;">
+                <col style="width: 8%;">
+                <col style="width: 9%;">
+                <col style="width: 12%;">
+                <col style="width: 8%;">
+                <col style="width: 12%;">
+                <col style="width: 12%;">
+                <col style="width: 10%;">
+                <col style="width: 9%;">
+                <col style="width: 10%;">
+                <col style="width: 12%;">
+                <col style="width: 10%;">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Ticker</th>
@@ -252,20 +347,26 @@ function createPortfolioRow(pos, maxAbsPnlPercent) {
         <td><small style="color: #666;">${formatDateTime(pos.entrytime)}</small></td>
         <td>${pos.currentprice ? pos.currentprice.toFixed(2) : 'N/A'}€</td>
         <td class="mini-gauge-cell mini-gauge-cell-score">
-            <canvas id="score-buy-${rowId}" class="mini-gauge-canvas mini-gauge-canvas-score" width="104" height="65"></canvas>
-            <div class="mini-gauge-text">${getScoreBadge(pos.signalscore)}</div>
+            <div class="mini-gauge-wrap">
+                <canvas id="score-buy-${rowId}" class="mini-gauge-canvas mini-gauge-canvas-score" width="104" height="65"></canvas>
+                <div class="mini-gauge-text">${getScoreBadge(pos.signalscore)}</div>
+            </div>
         </td>
         <td class="mini-gauge-cell mini-gauge-cell-score">
-            <canvas id="score-now-${rowId}" class="mini-gauge-canvas mini-gauge-canvas-score" width="104" height="65"></canvas>
-            <div class="mini-gauge-text">${getScoreBadge(pos.current_score)} ${scoreChange}</div>
+            <div class="mini-gauge-wrap">
+                <canvas id="score-now-${rowId}" class="mini-gauge-canvas mini-gauge-canvas-score" width="104" height="65"></canvas>
+                <div class="mini-gauge-text">${getScoreBadge(pos.current_score)} ${scoreChange}</div>
+            </div>
         </td>
         <td><strong style="color: ${signalColor};">${pos.current_signal || 'HOLD'}</strong></td>
         <td>
             <div style="font-weight: 700;">${pos.totalcost.toFixed(2)}€</div>
         </td>
         <td class="mini-gauge-cell" style="color: ${pnlColor};">
-            <canvas id="pnl-${rowId}" class="mini-gauge-canvas" width="80" height="50"></canvas>
-            <div class="mini-gauge-text"><strong>${pos.unrealizedpnl ? pos.unrealizedpnl.toFixed(2) : '0.00'}€</strong> (${pos.unrealizedpnlpercent ? pos.unrealizedpnlpercent.toFixed(2) : '0.00'}%)</div>
+            <div class="mini-gauge-wrap">
+                <canvas id="pnl-${rowId}" class="mini-gauge-canvas" width="104" height="65"></canvas>
+                <div class="mini-gauge-text"><strong>${pos.unrealizedpnl ? pos.unrealizedpnl.toFixed(2) : '0.00'}€</strong> (${pos.unrealizedpnlpercent ? pos.unrealizedpnlpercent.toFixed(2) : '0.00'}%)</div>
+            </div>
         </td>
         <td><small style="color: #666;">${formatDateTime(pos.lastupdate)}</small></td>
         <td>
